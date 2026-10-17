@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QCM Juge-arbitre FFTir</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1d2433; --muted: #5f6878;
+    --line: #dcdcd4; --accent: #1f4e8c; --accent-ink: #fff;
+    --ok: #1d7a46; --ok-bg: #e5f4ea; --ko: #b3261e; --ko-bg: #fbe9e7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171d; --card: #1d222b; --ink: #e8eaee; --muted: #9aa3b2;
+      --line: #313846; --accent: #6ea0e6; --accent-ink: #0f1218;
+      --ok: #6fd39a; --ok-bg: #173325; --ko: #f08a80; --ko-bg: #3a1c1a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+          padding: 20px; margin-bottom: 16px; }
+  fieldset { border: 0; padding: 0; margin: 0 0 16px; }
+  legend { font-weight: 600; margin-bottom: 8px; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
+              border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+  label.opt:hover { border-color: var(--accent); }
+  input[type=radio], input[type=checkbox] { margin-top: 4px; accent-color: var(--accent); }
+  select { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line);
+           background: var(--card); color: var(--ink); }
+  button { font: inherit; font-weight: 600; padding: 10px 18px; border-radius: 8px; border: 0;
+           background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .meta { font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+  .q { font-weight: 600; margin: 0 0 12px; }
+  .score { font-size: 2.2rem; font-weight: 700; margin: 0; }
+  .ok { background: var(--ok-bg); border-color: var(--ok); }
+  .ko { background: var(--ko-bg); border-color: var(--ko); }
+  .tag { display: inline-block; font-size: .8rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+  .tag.ok { color: var(--ok); } .tag.ko { color: var(--ko); }
+  .expl { color: var(--muted); margin-top: 8px; }
+  .themes td { padding: 4px 12px 4px 0; }
+  .hidden { display: none; }
+  .print-only { display: none; }
+  @media print {
+    body { background: #fff; color: #000; }
+    .no-print { display: none !important; }
+    .print-only { display: block; }
+    .card { border: 0; padding: 0 0 12px; break-inside: avoid; }
+    .corrige { break-before: page; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>QCM Juge-arbitre FFTir</h1>
+  <p class="sub">Révision du tronc commun – Livret 1 (2019) et Livret 2 (2017). La correction s'affiche à la fin.</p>
+
+  <!-- Écran de configuration -->
+  <section id="setup" class="card no-print">
+    <fieldset>
+      <legend>Livrets</legend>
+      <label class="opt"><input type="radio" name="livret" value="all" checked> Livrets 1 et 2</label>
+      <label class="opt"><input type="radio" name="livret" value="1"> Livret 1 – Le juge-arbitre, comportement, sécurité, disciplines</label>
+      <label class="opt"><input type="radio" name="livret" value="2"> Livret 2 – Organisation de l'arbitrage, grades, jurys</label>
+    </fieldset>
+    <fieldset>
+      <legend>Nombre de questions</legend>
+      <select id="nb">
+        <option value="20">20</option>
+        <option value="40">40</option>
+        <option value="0" selected>Toutes</option>
+      </select>
+    </fieldset>
+    <fieldset>
+      <label class="opt"><input type="checkbox" id="melange" checked> Mélanger les questions et les réponses</label>
+    </fieldset>
+    <div class="row">
+      <button id="start">Commencer</button>
+      <button id="print" class="ghost">Version papier (corrigé à la fin)</button>
+    </div>
+  </section>
+
+  <!-- Questionnaire -->
+  <form id="quiz" class="hidden"></form>
+  <div id="quiz-actions" class="row hidden no-print">
+    <button id="finish">Terminer et voir la correction</button>
+    <span id="progress" class="meta"></span>
+  </div>
+
+  <!-- Résultats -->
+  <section id="results" class="hidden"></section>
+
+  <!-- Version papier -->
+  <section id="paper" class="hidden"></section>
+</main>
+
+<script src="questions.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const LETTRES = ["A", "B", "C", "D", "E"];
+let serie = [];
+
+function melanger(t) {
+  const a = t.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function construireSerie() {
+  const livret = document.querySelector('input[name=livret]:checked').value;
+  const nb = parseInt($("#nb").value, 10);
+  const mix = $("#melange").checked;
+  let qs = QUESTIONS.filter(q => livret === "all" || String(q.livret) === livret);
+  if (mix) qs = melanger(qs);
+  if (nb > 0) qs = qs.slice(0, nb);
+  return qs.map(q => {
+    let ordre = q.choix.map((_, i) => i);
+    if (mix) ordre = melanger(ordre);
+    return { ...q, choix: ordre.map(i => q.choix[i]), bonne: ordre.indexOf(q.bonne) };
+  });
+}
+
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+function afficherQuiz() {
+  const f = $("#quiz");
+  f.innerHTML = serie.map((q, i) => `
+    <div class="card">
+      <div class="meta">Question ${i + 1}/${serie.length} · Livret ${q.livret} · ${esc(q.theme)}</div>
+      <p class="q">${esc(q.q)}</p>
+      ${q.choix.map((c, j) => `
+        <label class="opt"><input type="radio" name="q${i}" value="${j}"> <span><b>${LETTRES[j]}.</b> ${esc(c)}</span></label>
+      `).join("")}
+    </div>`).join("");
+  f.classList.remove("hidden");
+  $("#quiz-actions").classList.remove("hidden");
+  majProgression();
+}
+
+function majProgression() {
+  const rep = serie.filter((_, i) => document.querySelector(`input[name=q${i}]:checked`)).length;
+  $("#progress").textContent = `${rep}/${serie.length} réponses`;
+}
+
+function corriger() {
+  const reponses = serie.map((_, i) => {
+    const r = document.querySelector(`input[name=q${i}]:checked`);
+    return r ? parseInt(r.value, 10) : null;
+  });
+  const nonRep = reponses.filter(r => r === null).length;
+  if (nonRep && !confirm(`${nonRep} question(s) sans réponse. Terminer quand même ?`)) return;
+
+  let total = 0;
+  const parTheme = {};
+  serie.forEach((q, i) => {
+    const ok = reponses[i] === q.bonne;
+    if (ok) total++;
+    const k = `Livret ${q.livret} – ${q.theme}`;
+    parTheme[k] = parTheme[k] || { ok: 0, n: 0 };
+    parTheme[k].n++; if (ok) parTheme[k].ok++;
+  });
+  const pct = Math.round(100 * total / serie.length);
+
+  $("#results").innerHTML = `
+    <div class="card">
+      <p class="score">${total}/${serie.length} · ${pct} %</p>
+      <p class="meta">${pct >= 80 ? "Très bien, c'est maîtrisé." : pct >= 60 ? "Correct, revois les thèmes les plus faibles." : "À retravailler : relis les livrets puis recommence."}</p>
+      <table class="themes">${Object.entries(parTheme).map(([k, v]) =>
+        `<tr><td>${esc(k)}</td><td><b>${v.ok}/${v.n}</b></td></tr>`).join("")}</table>
+      <div class="row no-print" style="margin-top:16px">
+        <button onclick="location.reload()">Nouvelle série</button>
+        <button class="ghost" onclick="window.print()">Imprimer la correction</button>
+      </div>
+    </div>
+    <h2>Correction</h2>
+    ${serie.map((q, i) => {
+      const r = reponses[i], ok = r === q.bonne;
+      return `<div class="card ${ok ? "ok" : "ko"}">
+        <div class="meta">Question ${i + 1} · Livret ${q.livret} · ${esc(q.theme)}
+          <span class="tag ${ok ? "ok" : "ko"}">${ok ? "Juste" : r === null ? "Sans réponse" : "Faux"}</span></div>
+        <p class="q">${esc(q.q)}</p>
+        ${r !== null && !ok ? `<div>Ta réponse : ${LETTRES[r]}. ${esc(q.choix[r])}</div>` : ""}
+        <div><b>Bonne réponse : ${LETTRES[q.bonne]}. ${esc(q.choix[q.bonne])}</b></div>
+        <div class="expl">${esc(q.explication)}</div>
+      </div>`;
+    }).join("")}`;
+
+  $("#quiz").classList.add("hidden");
+  $("#quiz-actions").classList.add("hidden");
+  $("#results").classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+
+function versionPapier() {
+  serie = construireSerie();
+  $("#paper").innerHTML = `
+    <div class="no-print row" style="margin-bottom:16px">
+      <button onclick="window.print()">Imprimer / PDF</button>
+      <button class="ghost" onclick="location.reload()">Retour</button>
+    </div>
+    <h2>Questions (${serie.length})</h2>
+    <p class="print-only">Nom : ____________________ Date : __________ Score : ____ / ${serie.length}</p>
+    ${serie.map((q, i) => `<div class="card">
+      <p class="q">${i + 1}. ${esc(q.q)}</p>
+      ${q.choix.map((c, j) => `<div>☐ ${LETTRES[j]}. ${esc(c)}</div>`).join("")}
+    </div>`).join("")}
+    <div class="corrige">
+      <h2>Corrigé</h2>
+      ${serie.map((q, i) => `<div class="card">
+        <b>${i + 1}. ${LETTRES[q.bonne]}</b> – ${esc(q.choix[q.bonne])}
+        <div class="expl">${esc(q.explication)}</div>
+      </div>`).join("")}
+    </div>`;
+  $("#setup").classList.add("hidden");
+  $("#paper").classList.remove("hidden");
+}
+
+$("#start").addEventListener("click", () => {
+  serie = construireSerie();
+  $("#setup").classList.add("hidden");
+  afficherQuiz();
+});
+$("#quiz").addEventListener("change", majProgression);
+$("#finish").addEventListener("click", corriger);
+$("#print").addEventListener("click", versionPapier);
+</script>
+</body>
+</html>
