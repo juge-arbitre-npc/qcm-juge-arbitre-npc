@@ -1,40 +1,59 @@
 # QCM Juge-arbitre FFTir
 
-Site de révision pour le tronc commun juge-arbitre de la Fédération Française de Tir, basé sur :
+Site de révision pour l'examen de juge-arbitre de la Fédération Française de Tir.
 
-- **Livret 1** Juge-arbitre (janvier 2019) : le juge-arbitre, comportement, intervention, sécurité, disciplines, lexique
-- **Livret 2** Juge-arbitre (octobre 2017) : organisation de l'arbitrage, grades et examens, gestion des arbitres, compétitions et jurys
+Site : https://juge-arbitre-npc.github.io/qcm-juge-arbitre-npc/
+
+## Questionnaires
+
+| Module | Contenu | Statut |
+|---|---|---|
+| Livret 1 | Juge-arbitre, comportement, sécurité, disciplines (janv. 2019) | Obligatoire |
+| Livret 2 | Organisation de l'arbitrage, grades, jurys (oct. 2017) | Obligatoire |
+| ISSF | Règles générales, cibles papier, carabine, pistolet, plateau, cible mobile | Obligatoire |
+| WSPS | Para-tir | Au choix |
+| IAU | Arbalète Match et Field | Au choix |
+| Écoles de tir | Cible et plateau | Au choix |
+| MLAIC | Armes anciennes | Au choix |
+| WBSF / WRABF | Bench-rest, tir au score, rimfire | Au choix |
+| IMSSU | Silhouettes métalliques | Au choix |
+| TAR | Tir aux armes réglementaires | Au choix |
+| IPSC | Tir sportif de vitesse | Au choix |
+| ISR | ISR et Mini ISR | Au choix |
+
+Les questions des règlements sont tirées des PDF publiés sur fftir.org ; chaque question indique sa source (document et article).
 
 ## Fonctionnement
 
-- Choix du livret (1, 2 ou les deux) et du nombre de questions
+- Choix des modules (le socle obligatoire est coché par défaut)
+- 25 ou 50 questions au hasard, ou toutes
 - Questions et réponses mélangées à chaque série
-- **Correction complète à la fin** : bonne réponse, explication, score global et par thème
+- **Correction complète à la fin** : bonne réponse, explication, source, score global et par thème
 - **Version papier** imprimable (questions puis corrigé sur une page séparée)
 
-Site 100 % statique (HTML + JS, aucune dépendance) : il s'ouvre aussi en local en double-cliquant sur `index.html`.
+Site 100 % statique (HTML + JS, aucune dépendance).
 
 ## Ajouter ou modifier des questions
 
-Tout est dans `questions.js`. Chaque question suit ce format :
+Un fichier par module dans `questions/`. Chaque question suit ce format :
 
 ```js
 {
-  livret: 1, theme: "Sécurité",
-  q: "Une arme « chargée » est une arme :",
-  choix: ["...", "...", "...", "..."],
+  module: "issf", theme: "Pistolet",
+  q: "Texte de la question",
+  choix: ["…", "…", "…", "…"],
   bonne: 1,            // index de la bonne réponse (0 = A, 1 = B…)
-  explication: "..."
+  explication: "…",
+  source: "Règles Pistolet ISSF, art. …"
 }
 ```
 
-## Déploiement gratuit (GitHub Pages)
+Nouveau module : l'ajouter dans `questions/modules.js`, créer son fichier dans `questions/` et l'ajouter dans la liste des `<script>` de `index.html`.
 
-Le workflow `.github/workflows/pages.yml` publie le site à chaque push sur `main`.
-Une seule fois : **Settings → Pages → Source : GitHub Actions**.
+## Déploiement
 
-URL : https://juge-arbitre-npc.github.io/qcm-juge-arbitre-npc/
+GitHub Pages, via `.github/workflows/pages.yml`, à chaque push sur `main`.
 
 ## Avertissement
 
-Les livrets datent de 2017 et 2019. Les règlements sportifs évoluent chaque saison : en cas de doute, c'est la dernière version publiée sur [fftir.org](https://www.fftir.org) et les consignes de ton RRA qui font foi.
+Les règlements évoluent chaque saison : en cas de doute, c'est la dernière version publiée sur [fftir.org](https://www.fftir.org) et les consignes de ton RRA qui font foi.
