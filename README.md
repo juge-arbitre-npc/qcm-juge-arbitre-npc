@@ -33,7 +33,7 @@ Tout est dans `questions.js`. Chaque question suit ce format :
 Le workflow `.github/workflows/pages.yml` publie le site à chaque push sur `main`.
 Une seule fois : **Settings → Pages → Source : GitHub Actions**.
 
-URL : `https://<utilisateur>.github.io/qcm-juge-arbitre-fftir/`
+URL : https://juge-arbitre-npc.github.io/qcm-juge-arbitre-npc/
 
 ## Avertissement
 
